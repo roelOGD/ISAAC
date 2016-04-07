@@ -1,4 +1,4 @@
-﻿Write-host "begint nu met nieuwe shell"
+﻿﻿Write-host "begint nu met nieuwe shell"
 $shell = New-Object -ComObject Shell.Application
 $ieTabs = $shell.Windows()
 $ie_ = $ieTabs | ? {$_.LocationURL -eq "https://nwo.acc.isaac.spinozanet.nl/nl/beheer1"} 
@@ -10,6 +10,7 @@ Write-Host "Aantal velden gevonden: " + $knoppen.count
 #$knoppen |  select -first 3 | select -Last 1
 
 for($i=1;$i -lt $knoppen.count ; ( $i ++)){
+    write-host "$i / " $knoppen.count -ForegroundColor Yellow 
     while(! ($ie_.Document.documentElement.getElementsByTagName("div") |   Where {$_.IHTMLElement_className -eq 'aq-answer-holder '})) {
         Start-Sleep -m 100
     }
