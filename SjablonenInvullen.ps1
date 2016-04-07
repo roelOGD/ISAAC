@@ -1,27 +1,45 @@
-﻿﻿Write-host "begint nu met nieuwe shell"
+﻿Write-Host "begint nu met nieuwe shell"
 $shell = New-Object -ComObject Shell.Application
 $ieTabs = $shell.Windows()
 $ie_ = $ieTabs | ? {$_.LocationURL -eq "https://nwo.acc.isaac.spinozanet.nl/nl/beheer1"} 
 
-# De sjabloon kolom bevat nooit <br>. En de Type kolom wel. Hier is dus de scheiding op gemaakt. 
-$knoppen = $ie_.Document.documentElement.getElementsByTagName("div") |   Where {$_.IHTMLElement_className -eq 'aq-answer-holder '-and $_.IHTMLElement_outerText -ne "" -and ($_.IHTMLElement_outerHTML -match "<br>")} 
-Write-Host "Aantal velden gevonden: " + $knoppen.count
+$newKnoppen_initieel = newKnoppen
 
-#$knoppen |  select -first 3 | select -Last 1
+function newKnoppen(){
+    # De sjabloon kolom bevat nooit <br>. En de Type kolom wel. Hier is dus de scheiding op gemaakt. 
+    #alleen op het moment dat sjabloon niet is ingevuld, dan moet die meegenomen worden
+    [System.Collections.Generic.List[System.Object]]$knoppen = $ie_.Document.documentElement.getElementsByTagName("div") |   Where {$_.IHTMLElement_className -eq 'aq-answer-holder '} 
+    $newKnoppen =@()
+    for($i = 0; $i -lt $knoppen.count ; $i++){
+        if(  (($knoppen[$i].IHTMLElement_outerHTML -match "<br>")  -and ($knoppen[($i +1)].IHTMLElement_outerHTML -match "<br>")) -or  ( ($i -eq ($knoppen.count -1 )) -and ($knoppen[($i)].IHTMLElement_outerHTML -match "<br>") ) ){
+          $newKnoppen += $knoppen[$i]
+           Write-Host $i
+        }
+        else{
+            Write-Host $i -ForegroundColor Red
+        }
+   
+    }
 
-for($i=1;$i -lt $knoppen.count ; ( $i ++)){
-    write-host "$i / " $knoppen.count -ForegroundColor Yellow 
+    Write-Host "Aantal velden gevonden: " + $Knoppen.count
+    Write-Host "Aantal velden gevonden die gedaan moeten worden: " + $newKnoppen.count
+
+    return $newKnoppen
+}
+
+
+
+for($i=1;$i -le $newKnoppen_initieel.count ; ( $i ++)){
+    write-host "$i / " $newKnoppen_initieel.count -ForegroundColor Yellow 
     while(! ($ie_.Document.documentElement.getElementsByTagName("div") |   Where {$_.IHTMLElement_className -eq 'aq-answer-holder '})) {
         Start-Sleep -m 100
     }
     # knoppen opnieuw inladen want anders werkt het niet
-    $knoppen = $ie_.Document.documentElement.getElementsByTagName("div") |   Where {$_.IHTMLElement_className -eq 'aq-answer-holder '-and $_.IHTMLElement_outerText -ne "" -and ($_.IHTMLElement_outerHTML -match "<br>")} 
+    $newKnoppen = newKnoppen
 
     # de juiste knoppakken
-    $knop = $knoppen | select -First $i  | select -Last 1
-    $sjabloon = $knoppen | select -First ($i + 1) | select -Last 1
-    $sjabloon.IHTMLElement_outerText 
-      
+    $knop = $newKnoppen | select -First 1
+
     Write-Host "Gaat nu op knop drukken:" + $knop.IHTMLElement_outerHTML + $knop.outerText -ForegroundColor Cyan
     $knop.click()
 
